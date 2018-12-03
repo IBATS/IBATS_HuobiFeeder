@@ -8,8 +8,8 @@
 @desc    : 
 """
 from sqlalchemy import create_engine
-from config import Config
+from config import config
 
-engines = {key: create_engine(url) for key, url in Config.DB_URL_DIC.items()}
+engines = {key: create_engine(url) for key, url in config.DB_URL_DIC.items()}
 
-engine_md = engines[Config.DB_SCHEMA_MD]
+engine_md = engines[config.DB_SCHEMA_MD]

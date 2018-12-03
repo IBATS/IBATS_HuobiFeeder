@@ -10,9 +10,9 @@
 from sqlalchemy import Column, Integer, String, UniqueConstraint, TIMESTAMP, text
 from sqlalchemy.dialects.mysql import DOUBLE
 from sqlalchemy.ext.declarative import declarative_base
-from huobifeeder.utils.db_utils import with_db_session
-from huobifeeder.backend import engine_md
-from config import Config
+from ibats_common.utils.db import with_db_session
+from ibats_huobifeeder.backend import engine_md
+from config import config
 import logging
 logger = logging.getLogger()
 BaseModel = declarative_base()
@@ -142,7 +142,7 @@ def init(alter_table=False):
     BaseModel.metadata.create_all(engine_md)
     if alter_table:
         with with_db_session(engine=engine_md) as session:
-            show_status_sql_str = f"show table status from {Config.DB_SCHEMA_MD} where name=:table_name"
+            show_status_sql_str = f"show table status from {config.DB_SCHEMA_MD} where name=:table_name"
             for table_name, _ in BaseModel.metadata.tables.items():
                 row_data = session.execute(show_status_sql_str, params={'table_name': table_name}).first()
                 if row_data is None:
@@ -157,7 +157,7 @@ def init(alter_table=False):
             sql_str = f"""select table_name from information_schema.columns 
               where table_schema = :table_schema and column_name = 'ts_start' and extra <> ''"""
             table_name_list = [row_data[0]
-                               for row_data in session.execute(sql_str, params={'table_schema': Config.DB_SCHEMA_MD})]
+                               for row_data in session.execute(sql_str, params={'table_schema': config.DB_SCHEMA_MD})]
 
             for table_name in table_name_list:
                 logger.info('修改 %s 表 ts_start 默认值，剔除 on update 默认项', table_name)

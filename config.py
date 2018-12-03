@@ -4,74 +4,61 @@ Created on 2017/6/9
 @author: MG
 """
 import logging
-from logging.handlers import RotatingFileHandler
+from ibats_common.config import ConfigBase as ConBase, update_db_config
+from ibats_common.common import ExchangeName
+
+logger = logging.getLogger(__name__)
 
 
-class ConfigBase:
+class ConfigBase(ConBase):
 
     # 交易所名称
-    MARKET_NAME = 'huobi'
+    MARKET_NAME = ExchangeName.HuoBi.name
 
     # api configuration
-    EXCHANGE_ACCESS_KEY = ""
-    EXCHANGE_SECRET_KEY = ""
+    EXCHANGE_ACCESS_KEY = '***'
+    EXCHANGE_SECRET_KEY = '***'
 
     # mysql db info
-    ENABLE_DB_HANDLER = True
-    DB_SCHEMA_MD = 'bc_md'
+    DB_HANDLER_ENABLE = True
+    DB_SCHEMA_MD = 'md_huobi'
     DB_URL_DIC = {
-        DB_SCHEMA_MD: 'mysql://mg:****@localhost/' + DB_SCHEMA_MD
+        DB_SCHEMA_MD: 'mysql://m*:***@localhost/' + DB_SCHEMA_MD
     }
 
     # redis info
-    ENABLE_REDIS_HANDLER = True
-    REDIS_INFO_DIC = {'REDIS_HOST': 'localhost',
+    REDIS_PUBLISHER_HANDLER_ENABLE = False
+    REDIS_INFO_DIC = {'REDIS_HOST': 'localhost',  # '192.168.239.131'
                       'REDIS_PORT': '6379',
                       }
-
-    # evn configuration
-    LOG_FORMAT = '%(asctime)s %(levelname)s %(name)s %(filename)s.%(funcName)s:%(lineno)d|%(message)s'
 
     def __init__(self):
         """
         初始化一些基本配置信息
         """
-        pass
-
-
-class ConfigTest(ConfigBase):
-    EXCHANGE_ACCESS_KEY = '***'
-    EXCHANGE_SECRET_KEY = '***'
-
-    DB_URL_DIC = {
-        ConfigBase.DB_SCHEMA_MD: 'mysql://mg:***@10.0.3.66/' + ConfigBase.DB_SCHEMA_MD
-    }
+        # 设置rest调用日志输出级别
+        # logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.WARNING)
+        logging.getLogger('urllib3.connectionpool').setLevel(logging.INFO)
+        logging.getLogger('DBHandler->md_min1_tick_bc').setLevel(logging.INFO)
+        logging.getLogger('DBHandler->md_min1_bc').setLevel(logging.INFO)
+        logging.getLogger('DBHandler->md_min60_bc').setLevel(logging.INFO)
+        logging.getLogger('DBHandler->md_daily_bc').setLevel(logging.INFO)
+        logging.getLogger('MDFeeder').setLevel(logging.INFO)
+        # logging.getLogger('md_min1_bc').setLevel(logging.INFO)
+        # logging.getLogger('md_min1_tick_bc').setLevel(logging.INFO)
 
 
 # 测试配置（测试行情库）
-Config = ConfigTest()
-# 生产配置
-# Config = ConfigProduct()
+config = ConfigBase()
+update_db_config(config.DB_URL_DIC)
 
-# 设定默认日志格式
-logging.basicConfig(level=logging.DEBUG, format=Config.LOG_FORMAT)
-# 设置rest调用日志输出级别
-# logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.WARNING)
-logging.getLogger('urllib3.connectionpool').setLevel(logging.INFO)
-logging.getLogger('DBHandler->md_min1_tick_bc').setLevel(logging.INFO)
-logging.getLogger('DBHandler->md_min1_bc').setLevel(logging.INFO)
-logging.getLogger('DBHandler->md_min60_bc').setLevel(logging.INFO)
-logging.getLogger('DBHandler->md_daily_bc').setLevel(logging.INFO)
-logging.getLogger('MDFeeder').setLevel(logging.INFO)
-# logging.getLogger('md_min1_bc').setLevel(logging.INFO)
-# logging.getLogger('md_min1_tick_bc').setLevel(logging.INFO)
 
-# 配置文件日至
-# handler = RotatingFileHandler('log.log', maxBytes=10 * 1024 * 1024, backupCount=5)
-# handler.setLevel(logging.INFO)
-# formatter = logging.Formatter(Config.LOG_FORMAT)
-# handler.setFormatter(formatter)
-# logging.getLogger('').addHandler(handler)
+def update_config(config_new: ConfigBase, update_db=True):
+    global config
+    config = config_new
+    logger.info('更新默认配置信息 %s < %s', ConfigBase, config_new.__class__)
+    if update_db:
+        update_db_config(config.DB_URL_DIC)
 
 
 if __name__ == "__main__":

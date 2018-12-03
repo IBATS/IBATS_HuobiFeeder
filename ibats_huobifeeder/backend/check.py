@@ -7,14 +7,14 @@
 @contact : mmmaaaggg@163.com
 @desc    : 用于对系统配置的环境进行检测，检查是否环境可用，包括mysql、redis等
 """
-from config import Config
+from config import config
 import threading
 import json
 import time
 import logging
-from abat.common import PeriodType
-from huobifeeder.utils.fh_utils import bytes_2_str
-from huobifeeder.utils.redis import get_channel, get_redis
+from ibats_common.common import PeriodType
+from ibats_common.utils.mess import bytes_2_str
+from ibats_common.utils.redis import get_channel, get_redis
 logger = logging.getLogger()
 _signal = {}
 
@@ -39,7 +39,7 @@ def check_redis():
     """
     global _signal
     instrument_id = 'rb1805'
-    channel = get_channel(market=Config.MARKET_NAME, period=PeriodType.Year1, symbol=instrument_id)
+    channel = get_channel(market=config.MARKET_NAME, period=PeriodType.Year1, symbol=instrument_id)
     logger.info('测试 Channel：%s', channel)
     _signal['redis'] = False
 

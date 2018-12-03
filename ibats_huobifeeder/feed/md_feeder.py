@@ -13,22 +13,22 @@ from datetime import datetime, timedelta
 import itertools
 from huobitrade.service import HBWebsocket, HBRestAPI
 from huobitrade import setKey
-from config import Config
-from huobifeeder.backend import engine_md
-from huobifeeder.utils.db_utils import with_db_session
-from huobifeeder.utils.fh_utils import try_n_times
-from huobifeeder.backend.orm import SymbolPair
-from huobifeeder.backend.check import check_redis
+from config import config
+from ibats_huobifeeder.backend import engine_md
+from ibats_common.utils.db import with_db_session
+from ibats_common.utils.mess import try_n_times
+from ibats_huobifeeder.backend.orm import SymbolPair
+from ibats_huobifeeder.backend.check import check_redis
 import time
 from threading import Thread
-from huobifeeder.backend.orm import MDTick, MDMin1, MDMin1Temp, MDMin60, MDMin60Temp, MDMinDaily, MDMinDailyTemp
-from huobifeeder.backend.handler import DBHandler, PublishHandler, HeartBeatHandler
+from ibats_huobifeeder.backend.orm import MDTick, MDMin1, MDMin1Temp, MDMin60, MDMin60Temp, MDMinDaily, MDMinDailyTemp
+from ibats_huobifeeder.backend.handler import DBHandler, PublishHandler, HeartBeatHandler
 from sqlalchemy import func
 
 
 logger = logging.getLogger()
 # 设置秘钥
-setKey(Config.EXCHANGE_ACCESS_KEY, Config.EXCHANGE_SECRET_KEY)
+setKey(config.EXCHANGE_ACCESS_KEY, config.EXCHANGE_SECRET_KEY)
 
 
 class MDFeeder(Thread):
@@ -71,7 +71,7 @@ class MDFeeder(Thread):
             # 获取支持的交易对
             data_dic_list = []
             for d in ret['data']:
-                d['market'] = Config.MARKET_NAME  # 'huobi'
+                d['market'] = config.MARKET_NAME  # 'huobi'
                 data_dic_list.append({key_mapping.setdefault(k, k): v for k, v in d.items()})
 
             with with_db_session(engine_md) as session:
@@ -89,7 +89,7 @@ class MDFeeder(Thread):
             self.hb.sub_dict['ethusdt60'] = {'id': '', 'topic': 'market.ethusdt.kline.60min'}
 
         # handler = SimpleHandler('simple handler')
-        if Config.ENABLE_DB_HANDLER:
+        if config.ENABLE_DB_HANDLER:
             # Tick 数据插入
             handler = DBHandler(period='1min', db_model=MDTick, save_tick=True)
             self.hb.register_handler(handler)
@@ -113,8 +113,8 @@ class MDFeeder(Thread):
                 time.sleep(1)
 
         # 数据redis广播
-        if Config.ENABLE_REDIS_HANDLER and check_redis():
-            handler = PublishHandler(market=Config.MARKET_NAME)
+        if config.ENABLE_REDIS_HANDLER and check_redis():
+            handler = PublishHandler(market=config.MARKET_NAME)
             self.hb.register_handler(handler)
             logger.info('注册 %s 处理句柄', handler.name)
 
@@ -208,11 +208,11 @@ class MDFeeder(Thread):
         """
         with with_db_session(engine_md) as session:
             data = session.query(SymbolPair).filter(
-                SymbolPair.market == Config.MARKET_NAME).all()  # , SymbolPair.symbol_partition == 'main'
+                SymbolPair.market == config.MARKET_NAME).all()  # , SymbolPair.symbol_partition == 'main'
             pair_datetime_latest_dic = dict(
                 session.query(
                     model_tmp.symbol, func.max(model_tmp.ts_start)
-                ).filter(model_tmp.market == Config.MARKET_NAME).group_by(model_tmp.symbol).all()
+                ).filter(model_tmp.market == config.MARKET_NAME).group_by(model_tmp.symbol).all()
             )
 
         # 循环获取每一个交易对的历史数据
@@ -252,7 +252,7 @@ class MDFeeder(Thread):
                 for data in data_list:
                     ts_start = datetime.fromtimestamp(data.pop('id'))
                     data['ts_start'] = ts_start
-                    data['market'] = Config.MARKET_NAME
+                    data['market'] = config.MARKET_NAME
                     data['ts_curr'] = ts_start + timedelta(seconds=59)  # , microseconds=999999
                     data['symbol'] = symbol
                     data_dic_list.append(data)
@@ -293,17 +293,17 @@ class MDFeeder(Thread):
                 where market=:market and symbol=:symbol 
                 ON DUPLICATE KEY UPDATE open=VALUES(open), high=VALUES(high), low=VALUES(low), close=VALUES(close)
                 , amount=VALUES(amount), vol=VALUES(vol), count=VALUES(count)"""
-                session.execute(sql_str, params={"symbol": symbol, "market": Config.MARKET_NAME})
+                session.execute(sql_str, params={"symbol": symbol, "market": config.MARKET_NAME})
                 datetime_latest = session.query(
                     func.max(model_tmp.ts_start).label('ts_start_latest')
                 ).filter(
                     model_tmp.symbol == symbol,
-                    model_tmp.market == Config.MARKET_NAME
+                    model_tmp.market == config.MARKET_NAME
                 ).scalar()
                 # issue:
                 # https://stackoverflow.com/questions/9882358/how-to-delete-rows-from-a-table-using-an-sqlalchemy-query-without-orm
                 delete_count = session.query(model_tmp).filter(
-                    model_tmp.market == Config.MARKET_NAME,
+                    model_tmp.market == config.MARKET_NAME,
                     model_tmp.symbol == symbol,
                     model_tmp.ts_start < datetime_latest
                 ).delete()

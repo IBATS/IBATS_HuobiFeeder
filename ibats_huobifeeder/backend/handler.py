@@ -8,17 +8,17 @@
 @desc    : 
 """
 import logging
-from abat.common import PeriodType
+from ibats_common.common import PeriodType
 from huobitrade.handler import baseHandler
 from prodconpattern import ProducerConsumer
-from huobifeeder.utils.fh_utils import datetime_2_str, STR_FORMAT_DATETIME2
+from ibats_common.utils.mess import datetime_2_str, STR_FORMAT_DATETIME2
 from datetime import datetime
 from sqlalchemy import Table, MetaData
 from sqlalchemy.orm import sessionmaker
-from huobifeeder.utils.redis import get_redis, get_channel
+from ibats_common.utils.redis import get_redis, get_channel
 import json
-from config import Config
-from huobifeeder.backend import engine_md
+from config import config
+from ibats_huobifeeder.backend import engine_md
 logger = logging.getLogger()
 
 
@@ -33,7 +33,7 @@ class SimpleHandler(baseHandler):
                 data = msg.get('tick')
                 # 调整相关属性
                 data['ts_start'] = datetime.fromtimestamp(data.pop('id'))
-                data['market'] = Config.MARKET_NAME  # 'huobi'
+                data['market'] = config.MARKET_NAME  # 'huobi'
                 data['ts_curr'] = datetime.fromtimestamp(msg['ts']/1000)
                 logger.info("data:%s", data)
             else:
@@ -85,7 +85,7 @@ class DBHandler(baseHandler):
                 # 2）降低不必要的数据库重复数据插入请求，保存前进行一次重复检查
                 if self.save_tick or symbol not in self.ts_start_last_tick:
                     # 调整相关属性
-                    data['market'] = Config.MARKET_NAME
+                    data['market'] = config.MARKET_NAME
                     data['ts_curr'] = datetime.fromtimestamp(msg['ts'] / 1000)
                     data['symbol'] = symbol
                     self.save_md(data)
@@ -97,7 +97,7 @@ class DBHandler(baseHandler):
                         # self.logger.info('different')
                         data_last_tick, ts_last_tick = self.last_tick[symbol]
                         # 调整相关属性
-                        data_last_tick['market'] = Config.MARKET_NAME
+                        data_last_tick['market'] = config.MARKET_NAME
                         data_last_tick['ts_curr'] = datetime.fromtimestamp(ts_last_tick / 1000)
                         data_last_tick['symbol'] = symbol
                         self.save_md(data_last_tick)
@@ -145,11 +145,11 @@ class DBHandler(baseHandler):
 
 class PublishHandler(baseHandler):
 
-    def __init__(self, market=Config.MARKET_NAME):
+    def __init__(self, market=config.MARKET_NAME):
         baseHandler.__init__(self, name=self.__class__.__name__)
         self.market = market
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.r = get_redis()
+        self.r = get_redis(config.REDIS_INFO_DIC['REDIS_HOST'], config.REDIS_INFO_DIC['REDIS_PORT'])
         # 记录上一个tick的 st_start 用于判断是否开始分钟切换，key 是 (period, pair)
         self.last_ts_start_pair_tick = {}
         self.last_tick_pair_tick = {}
@@ -176,7 +176,7 @@ class PublishHandler(baseHandler):
             # 调整相关属性
             ts_start = datetime.fromtimestamp(data.pop('id'))
             data['ts_start'] = datetime_2_str(ts_start, format=STR_FORMAT_DATETIME2)
-            data['market'] = Config.MARKET_NAME  # 'huobi'
+            data['market'] = config.MARKET_NAME  # 'huobi'
             data['ts_curr'] = datetime_2_str(datetime.fromtimestamp(msg['ts'] / 1000), format=STR_FORMAT_DATETIME2)
             data['symbol'] = symbol
             # Json
@@ -207,6 +207,8 @@ class PublishHandler(baseHandler):
                 period = PeriodType.Week1
             elif period_str == '1year':
                 period = PeriodType.Year1
+            else:
+                raise ValueError('period_str=%s 为无效参数' % period_str)
 
             # 分钟线切换时发送分钟线数据
             ts_start_last = self.last_ts_start_pair_tick.setdefault((period_str, symbol), None)
@@ -229,11 +231,11 @@ class PublishHandler(baseHandler):
 
 class FileHandler(baseHandler):
 
-    def __init__(self, market=Config.MARKET_NAME):
+    def __init__(self, market=config.MARKET_NAME):
         baseHandler.__init__(self, name=self.__class__.__name__)
         self.market = market
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.r = get_redis()
+        self.r = get_redis(config.REDIS_INFO_DIC['REDIS_HOST'], config.REDIS_INFO_DIC['REDIS_PORT'])
         # 记录上一个tick的 st_start 用于判断是否开始分钟切换，key 是 (period, pair)
         self.last_ts_start_pair_tick = {}
         self.last_tick_pair_tick = {}
@@ -260,7 +262,7 @@ class FileHandler(baseHandler):
             # 调整相关属性
             ts_start = datetime.fromtimestamp(data.pop('id'))
             data['ts_start'] = datetime_2_str(ts_start, format=STR_FORMAT_DATETIME2)
-            data['market'] = Config.MARKET_NAME  # 'huobi'
+            data['market'] = config.MARKET_NAME  # 'huobi'
             data['ts_curr'] = datetime_2_str(datetime.fromtimestamp(msg['ts'] / 1000), format=STR_FORMAT_DATETIME2)
             data['symbol'] = symbol
             # Json
@@ -291,6 +293,8 @@ class FileHandler(baseHandler):
                 period = PeriodType.Week1
             elif period_str == '1year':
                 period = PeriodType.Year1
+            else:
+                raise ValueError('period_str=%s 为无效参数' % period_str)
 
             # 分钟线切换时发送分钟线数据
             ts_start_last = self.last_ts_start_pair_tick.setdefault((period_str, symbol), None)
