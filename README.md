@@ -1,11 +1,11 @@
-﻿# [Huobi Feeder](https://github.com/mmmaaaggg/HuobiFeeder)
+﻿# [Huobi Feeder](https://github.com/IBATS/IBATS_HuobiFeeder)
 连接火币交易所
 
 通过 feed.md_feeder 接受事实行情及补充历史数据
 
 通过 backend.handler 处理实时行情，保持到数据库，进行redis广播
 
-该项目作为 ABAT 框架的 Feeder 组件可独立部署
+该项目作为 IBATS 框架的 Feeder 组件可独立部署
 
 
 
@@ -36,9 +36,9 @@ config.py
 
 1 ) MYSQL数据库用户名、密码
 ```python
-DB_SCHEMA_MD = 'bc_md'
+DB_SCHEMA_MD = 'md_huobi'
 DB_URL_DIC = {
-    DB_SCHEMA_MD: 'mysql://mg:****@10.0.3.66/' + DB_SCHEMA_MD
+    DB_SCHEMA_MD: 'mysql://m*:****@10.0.3.66/' + DB_SCHEMA_MD
 }
 ```
 2 ) 火币交易所 EXCHANGE_ACCESS_KEY、EXCHANGE_SECRET_KEY
@@ -54,13 +54,13 @@ EXCHANGE_SECRET_KEY = ""
 ```python
 # redis info
 REDIS_PUBLISHER_ENABLE = True
-REDIS_INFO_DIC = {'REDIS_HOST': '192.168.239.131',
+REDIS_INFO_DIC = {'REDIS_HOST': 'localhost',
                   'REDIS_PORT': '6379',
                   }
 ```
 #### 启动方法
 
-直接运行 huobifeeder/run.py
+直接运行 run.bat
 
 启动过程中会自动建立相应数据库表结构
 
