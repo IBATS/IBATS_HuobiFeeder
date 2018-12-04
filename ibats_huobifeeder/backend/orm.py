@@ -12,7 +12,7 @@ from sqlalchemy.dialects.mysql import DOUBLE
 from sqlalchemy.ext.declarative import declarative_base
 from ibats_common.utils.db import with_db_session
 from ibats_huobifeeder.backend import engine_md
-from config import config
+from ibats_huobifeeder.config import config
 import logging
 logger = logging.getLogger()
 BaseModel = declarative_base()

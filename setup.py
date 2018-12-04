@@ -13,13 +13,13 @@ with open("README.md", "r", encoding='utf-8') as rm:
     long_description = rm.read()
 
 setup(name='IBATS_Huobi_Feeder',
-      version='0.1.0',
+      version='0.1.1',
       description='连接 Huobi 火币交易所，获取实时行情、历史行情，保存到mysql数据库同时redis广播，供 IBATS 交易平台进行策略回测、分析，交易使用',
       long_description=long_description,
       long_description_content_type='text/markdown',
       author='MG',
       author_email='mmmaaaggg@163.com',
-      url='https://github.com/IBATS/IBATS_BitMexFeeder',
+      url='https://github.com/IBATS/IBATS_HuobiFeeder',
       packages=find_packages(),
       python_requires='>=3.6',
       classifiers=(

@@ -15,9 +15,10 @@ from ibats_common.utils.mess import datetime_2_str, STR_FORMAT_DATETIME2
 from datetime import datetime
 from sqlalchemy import Table, MetaData
 from sqlalchemy.orm import sessionmaker
-from ibats_common.utils.redis import get_redis, get_channel
+from ibats_common.utils.redis import get_channel
+from ibats_huobifeeder.backend import get_redis
 import json
-from config import config
+from ibats_huobifeeder.config import config
 from ibats_huobifeeder.backend import engine_md
 logger = logging.getLogger()
 
@@ -149,7 +150,7 @@ class PublishHandler(baseHandler):
         baseHandler.__init__(self, name=self.__class__.__name__)
         self.market = market
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.r = get_redis(config.REDIS_INFO_DIC['REDIS_HOST'], config.REDIS_INFO_DIC['REDIS_PORT'])
+        self.r = get_redis()
         # 记录上一个tick的 st_start 用于判断是否开始分钟切换，key 是 (period, pair)
         self.last_ts_start_pair_tick = {}
         self.last_tick_pair_tick = {}
@@ -235,7 +236,7 @@ class FileHandler(baseHandler):
         baseHandler.__init__(self, name=self.__class__.__name__)
         self.market = market
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.r = get_redis(config.REDIS_INFO_DIC['REDIS_HOST'], config.REDIS_INFO_DIC['REDIS_PORT'])
+        self.r = get_redis()
         # 记录上一个tick的 st_start 用于判断是否开始分钟切换，key 是 (period, pair)
         self.last_ts_start_pair_tick = {}
         self.last_tick_pair_tick = {}

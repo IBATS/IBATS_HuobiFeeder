@@ -11,7 +11,7 @@ import logging
 from huobitrade.service import HBWebsocket
 from huobitrade.handler import baseHandler
 from huobitrade import setKey
-from config import config
+from ibats_huobifeeder.config import config
 import time
 logger = logging.getLogger()
 setKey(config.EXCHANGE_ACCESS_KEY, config.EXCHANGE_SECRET_KEY)

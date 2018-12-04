@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 import itertools
 from huobitrade.service import HBWebsocket, HBRestAPI
 from huobitrade import setKey
-from config import config
+from ibats_huobifeeder.config import config
 from ibats_huobifeeder.backend import engine_md
 from ibats_common.utils.db import with_db_session
 from ibats_common.utils.mess import try_n_times
