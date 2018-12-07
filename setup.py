@@ -13,7 +13,7 @@ with open("README.md", "r", encoding='utf-8') as rm:
     long_description = rm.read()
 
 setup(name='IBATS_Huobi_Feeder',
-      version='0.1.2',
+      version='0.1.3',
       description='连接 Huobi 火币交易所，获取实时行情、历史行情，保存到mysql数据库同时redis广播，供 IBATS 交易平台进行策略回测、分析，交易使用',
       long_description=long_description,
       long_description_content_type='text/markdown',
