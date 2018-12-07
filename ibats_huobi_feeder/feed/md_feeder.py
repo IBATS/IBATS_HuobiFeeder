@@ -13,16 +13,16 @@ from datetime import datetime, timedelta
 import itertools
 from huobitrade.service import HBWebsocket, HBRestAPI
 from huobitrade import setKey
-from ibats_huobifeeder.config import config
-from ibats_huobifeeder.backend import engine_md
+from ibats_huobi_feeder.config import config
+from ibats_huobi_feeder.backend import engine_md
 from ibats_common.utils.db import with_db_session
 from ibats_common.utils.mess import try_n_times
-from ibats_huobifeeder.backend.orm import SymbolPair
-from ibats_huobifeeder.backend.check import check_redis
+from ibats_huobi_feeder.backend.orm import SymbolPair
+from ibats_huobi_feeder.backend.check import check_redis
 import time
 from threading import Thread
-from ibats_huobifeeder.backend.orm import MDTick, MDMin1, MDMin1Temp, MDMin60, MDMin60Temp, MDMinDaily, MDMinDailyTemp
-from ibats_huobifeeder.backend.handler import DBHandler, PublishHandler, HeartBeatHandler
+from ibats_huobi_feeder.backend.orm import MDTick, MDMin1, MDMin1Temp, MDMin60, MDMin60Temp, MDMinDaily, MDMinDailyTemp
+from ibats_huobi_feeder.backend.handler import DBHandler, PublishHandler, HeartBeatHandler
 from sqlalchemy import func
 
 
@@ -89,7 +89,7 @@ class MDFeeder(Thread):
             self.hb.sub_dict['ethusdt60'] = {'id': '', 'topic': 'market.ethusdt.kline.60min'}
 
         # handler = SimpleHandler('simple handler')
-        if config.ENABLE_DB_HANDLER:
+        if config.DB_HANDLER_ENABLE:
             # Tick 数据插入
             handler = DBHandler(period='1min', db_model=MDTick, save_tick=True)
             self.hb.register_handler(handler)
@@ -113,7 +113,7 @@ class MDFeeder(Thread):
                 time.sleep(1)
 
         # 数据redis广播
-        if config.ENABLE_REDIS_HANDLER and check_redis():
+        if config.REDIS_PUBLISHER_HANDLER_ENABLE and check_redis():
             handler = PublishHandler(market=config.MARKET_NAME)
             self.hb.register_handler(handler)
             logger.info('注册 %s 处理句柄', handler.name)

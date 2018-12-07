@@ -9,8 +9,8 @@
 """
 import time
 import logging
-from ibats_huobifeeder.backend.orm import init
-from ibats_huobifeeder.feed.md_feeder import start_supplier
+from ibats_huobi_feeder.backend.orm import init
+from ibats_huobi_feeder.feed.md_feeder import start_supplier
 logger = logging.getLogger()
 
 

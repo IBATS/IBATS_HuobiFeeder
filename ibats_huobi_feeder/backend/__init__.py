@@ -8,7 +8,7 @@
 @desc    : 
 """
 from ibats_common.utils.redis import get_redis as get_redis_base
-from ibats_huobifeeder.config import config
+from ibats_huobi_feeder.config import config
 from ibats_common.backend import engines
 
 

@@ -16,10 +16,10 @@ from datetime import datetime
 from sqlalchemy import Table, MetaData
 from sqlalchemy.orm import sessionmaker
 from ibats_common.utils.redis import get_channel
-from ibats_huobifeeder.backend import get_redis
+from ibats_huobi_feeder.backend import get_redis
 import json
-from ibats_huobifeeder.config import config
-from ibats_huobifeeder.backend import engine_md
+from ibats_huobi_feeder.config import config
+from ibats_huobi_feeder.backend import engine_md
 logger = logging.getLogger()
 
 

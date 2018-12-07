@@ -11,8 +11,8 @@ from sqlalchemy import Column, Integer, String, UniqueConstraint, TIMESTAMP, tex
 from sqlalchemy.dialects.mysql import DOUBLE
 from sqlalchemy.ext.declarative import declarative_base
 from ibats_common.utils.db import with_db_session
-from ibats_huobifeeder.backend import engine_md
-from ibats_huobifeeder.config import config
+from ibats_huobi_feeder.backend import engine_md
+from ibats_huobi_feeder.config import config
 import logging
 logger = logging.getLogger()
 BaseModel = declarative_base()

@@ -7,7 +7,7 @@
 @contact : mmmaaaggg@163.com
 @desc    : 用于对系统配置的环境进行检测，检查是否环境可用，包括mysql、redis等
 """
-from ibats_huobifeeder.config import config
+from ibats_huobi_feeder.config import config
 import threading
 import json
 import time
@@ -15,7 +15,7 @@ import logging
 from ibats_common.common import PeriodType
 from ibats_common.utils.mess import bytes_2_str
 from ibats_common.utils.redis import get_channel
-from ibats_huobifeeder.backend import get_redis
+from ibats_huobi_feeder.backend import get_redis
 
 logger = logging.getLogger()
 _signal = {}
