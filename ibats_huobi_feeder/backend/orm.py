@@ -173,6 +173,40 @@ def init(alter_table=False):
             # This is an issue  https://www.mail-archive.com/sqlalchemy@googlegroups.com/msg19744.html
             session.execute(f"ALTER TABLE {MDTick.__tablename__} CHANGE COLUMN `id` `id` INT(11) NULL AUTO_INCREMENT")
             session.commit()
+            # 关于 MDTick 表，由于 partition的原因，改变需要在索引方面做一些调整，这里暂未对其进行程序化处理
+            # 需要对原来的旧表进行相应的改变处理，大体的语句如下：
+            # """
+            #         ALTER TABLE `md_min1_tick_bc`
+            # ADD COLUMN `ts_date` DATE NOT NULL AFTER `symbol`,
+            # DROP PRIMARY KEY,
+            # ADD PRIMARY KEY (`market`, `symbol`, `ts_date`, `ts_curr`),
+            # DROP INDEX `id` ,
+            # ADD UNIQUE INDEX `id` (`id` ASC, `ts_date` ASC);
+            # """
+            # 另外，表分区语句如下
+            # """
+            # ALTER TABLE `bc_md`.`md_min1_tick_bc`
+            #  PARTITION BY RANGE(TO_DAYS(ts_date)) (
+            #  PARTITION part1 VALUES LESS THAN (TO_DAYS('2018-08-01')),
+            #  PARTITION part2 VALUES LESS THAN (TO_DAYS('2018-09-01')),
+            #  PARTITION part3 VALUES LESS THAN (TO_DAYS('2018-10-01')),
+            #  PARTITION part4 VALUES LESS THAN (TO_DAYS('2018-11-01')),
+            #  PARTITION part5 VALUES LESS THAN (TO_DAYS('2018-12-01')),
+            #  PARTITION part6 VALUES LESS THAN (TO_DAYS('2019-01-01')),
+            #  PARTITION part7 VALUES LESS THAN (TO_DAYS('2019-02-01')),
+            #  PARTITION part8 VALUES LESS THAN (TO_DAYS('2019-03-01')),
+            #  PARTITION part9 VALUES LESS THAN (TO_DAYS('2019-04-01')),
+            #  PARTITION part10 VALUES LESS THAN (TO_DAYS('2019-05-01')),
+            #  PARTITION part11 VALUES LESS THAN (TO_DAYS('2019-06-01')),
+            #  PARTITION part12 VALUES LESS THAN (TO_DAYS('2019-07-01')),
+            #  PARTITION part13 VALUES LESS THAN (TO_DAYS('2019-08-01')),
+            #  PARTITION part14 VALUES LESS THAN (TO_DAYS('2019-09-01')),
+            #  PARTITION part15 VALUES LESS THAN (TO_DAYS('2019-10-01')),
+            #  PARTITION part16 VALUES LESS THAN (TO_DAYS('2019-11-01')),
+            #  PARTITION part17 VALUES LESS THAN (TO_DAYS('2019-12-01')),
+            #  PARTITION part18 VALUES LESS THAN (MAXVALUE)
+            #  ) ;
+            # """
 
     logger.info("所有表结构建立完成")
 
