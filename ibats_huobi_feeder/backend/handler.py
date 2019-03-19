@@ -144,6 +144,54 @@ class DBHandler(baseHandler):
             self.logger.exception('%d 条实时行情 -> %s 失败', md_count, self.table_name)
 
 
+class DBHandler4Tick(DBHandler):
+    def handle(self, msg):
+        if 'ch' in msg:
+            topic = msg.get('ch')
+            _, symbol, _, period = topic.split('.')
+            if period == self.period:
+                data = msg.get('tick')
+                ts_start = datetime.fromtimestamp(data.pop('id'))
+                data['ts_start'] = ts_start
+                # 为了提高运行效率
+                # 1）降低不必要的对 data 字典的操作
+                # 2）降低不必要的数据库重复数据插入请求，保存前进行一次重复检查
+                if self.save_tick or symbol not in self.ts_start_last_tick:
+                    # 调整相关属性
+                    data['market'] = config.MARKET_NAME
+                    data['ts_curr'] = datetime.fromtimestamp(msg['ts'] / 1000)
+                    data['symbol'] = symbol
+                    data['ts_date'] = ts_start.date()
+                    self.save_md(data)
+                    self.logger.debug('invoke save_md %s', data)
+                else:
+                    # self.logger.info('ts_start: %s ts_start_last_tick[pair]:%s',
+                    #                  ts_start, self.ts_start_last_tick[pair])
+                    if ts_start != self.ts_start_last_tick[symbol]:
+                        # self.logger.info('different')
+                        data_last_tick, ts_last_tick = self.last_tick[symbol]
+                        # 调整相关属性
+                        data_last_tick['market'] = config.MARKET_NAME
+
+                        data_last_tick['ts_curr'] = datetime.fromtimestamp(ts_last_tick / 1000)
+                        data_last_tick['symbol'] = symbol
+                        data_last_tick['ts_date'] = ts_start.date()
+                        self.save_md(data_last_tick)
+                        self.logger.debug('invoke save_md last_tick %s', data_last_tick)
+
+                self.last_tick[symbol] = (data, msg['ts'])
+                self.ts_start_last_tick[symbol] = ts_start
+            # else:
+            #     self.logger.info(msg)
+
+        elif 'rep' in msg:
+            topic = msg.get('rep')
+            data = msg.get('data')
+            self.logger.info(msg)
+        else:
+            self.logger.warning(msg)
+
+
 class PublishHandler(baseHandler):
 
     def __init__(self, market=config.MARKET_NAME):

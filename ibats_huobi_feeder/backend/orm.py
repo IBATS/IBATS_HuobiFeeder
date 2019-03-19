@@ -7,7 +7,7 @@
 @contact : mmmaaaggg@163.com
 @desc    :
 """
-from sqlalchemy import Column, Integer, String, UniqueConstraint, TIMESTAMP, text
+from sqlalchemy import Column, Integer, String, UniqueConstraint, TIMESTAMP, text, Date
 from sqlalchemy.dialects.mysql import DOUBLE
 from sqlalchemy.ext.declarative import declarative_base
 from ibats_common.utils.db import with_db_session
@@ -37,6 +37,7 @@ class MDTick(BaseModel):
     id = Column(Integer, autoincrement=True, unique=True)
     market = Column(String(10), primary_key=True)
     symbol = Column(String(10), primary_key=True)
+    ts_date = Column(Date, primary_key=True)
     ts_start = Column(TIMESTAMP)
     ts_curr = Column(TIMESTAMP, primary_key=True, server_default=text('CURRENT_TIMESTAMP'))
     open = Column(DOUBLE)
@@ -139,6 +140,7 @@ class MDMinDailyTemp(BaseModel):
 
 
 def init(alter_table=False):
+    logger.info(engine_md)
     BaseModel.metadata.create_all(engine_md)
     if alter_table:
         with with_db_session(engine=engine_md) as session:

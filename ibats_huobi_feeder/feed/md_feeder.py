@@ -22,7 +22,7 @@ from ibats_huobi_feeder.backend.check import check_redis
 import time
 from threading import Thread
 from ibats_huobi_feeder.backend.orm import MDTick, MDMin1, MDMin1Temp, MDMin60, MDMin60Temp, MDMinDaily, MDMinDailyTemp
-from ibats_huobi_feeder.backend.handler import DBHandler, PublishHandler, HeartBeatHandler
+from ibats_huobi_feeder.backend.handler import DBHandler, PublishHandler, HeartBeatHandler, DBHandler4Tick
 from sqlalchemy import func
 
 
@@ -91,8 +91,10 @@ class MDFeeder(Thread):
         # handler = SimpleHandler('simple handler')
         if config.DB_HANDLER_ENABLE:
             # Tick 数据插入
-            handler = DBHandler(period='1min', db_model=MDTick, save_tick=True)
+            period = '1min'
+            handler = DBHandler4Tick(period=period, db_model=MDTick, save_tick=True)
             self.hb.register_handler(handler)
+            logger.info("注册 %s 处理句柄 period='%s'", handler.name, period)
             time.sleep(1)
             # 其他周期数据插入
             for period in periods:
@@ -109,7 +111,7 @@ class MDFeeder(Thread):
                     continue
                 handler = DBHandler(period=period, db_model=db_model, save_tick=save_tick)
                 self.hb.register_handler(handler)
-                logger.info('注册 %s 处理句柄', handler.name)
+                logger.info("注册 %s 处理句柄 period='%s'", handler.name, period)
                 time.sleep(1)
 
         # 数据redis广播
@@ -185,7 +187,7 @@ class MDFeeder(Thread):
         while self.is_working:
             time.sleep(5)
 
-    def fill_history(self, periods=['1day', '1min', '60min']):
+    def fill_history(self, periods=['1min', '60min', '1day']):
         for period in periods:
             if period == '1min':
                 model_tot, model_tmp = MDMin1, MDMin1Temp
@@ -216,7 +218,8 @@ class MDFeeder(Thread):
             )
 
         # 循环获取每一个交易对的历史数据
-        for symbol_info in data:
+        data_count = len(data)
+        for num, symbol_info in enumerate(data, start=1):
             symbol = f'{symbol_info.base_currency}{symbol_info.quote_currency}'
             if symbol in pair_datetime_latest_dic:
                 datetime_latest = pair_datetime_latest_dic[symbol]
@@ -256,7 +259,7 @@ class MDFeeder(Thread):
                     data['ts_curr'] = ts_start + timedelta(seconds=59)  # , microseconds=999999
                     data['symbol'] = symbol
                     data_dic_list.append(data)
-                self._save_md(data_dic_list, symbol, model_tot, model_tmp)
+                self._save_md(data_dic_list, symbol, model_tot, model_tmp, log_header=f"{num}/{data_count}")
             else:
                 self.logger.error("get_kline(symbol='%s', period='%s', size='%d') got error:%s",
                                   symbol, period, size, ret)
@@ -268,7 +271,7 @@ class MDFeeder(Thread):
         ret = self.api.get_kline(symbol, period, size=size)
         return ret
 
-    def _save_md(self, data_dic_list, symbol, model_tot: MDMin1, model_tmp: MDMin1Temp):
+    def _save_md(self, data_dic_list, symbol, model_tot: MDMin1, model_tmp: MDMin1Temp, log_header=''):
         """
         保存md数据到数据库及文件
         :param data_dic_list:
@@ -307,10 +310,12 @@ class MDFeeder(Thread):
                     model_tmp.symbol == symbol,
                     model_tmp.ts_start < datetime_latest
                 ).delete()
-                self.logger.debug('%d 条 %s 历史数据被清理，最新数据日期 %s', delete_count, symbol, datetime_latest)
+                self.logger.debug('%s %d 条 %s 历史数据被清理，最新数据日期 %s',
+                                  log_header, delete_count, symbol, datetime_latest)
                 session.commit()
             except:
-                self.logger.exception('%d 条 %s 数据-> %s 失败', md_count, symbol, model_tot.__tablename__)
+                self.logger.exception('%s %d 条 %s 数据-> %s 失败',
+                                      log_header, md_count, symbol, model_tot.__tablename__)
 
 
 def start_supplier(init_symbols=False, do_fill_history=False) -> MDFeeder:
