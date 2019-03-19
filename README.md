@@ -170,3 +170,39 @@ SUBSCRIBE md.huobi.Tick.eosusdt
     flush privileges; #刷新系统权限表
     ```
  
+ ## 2019-03-19 版本升级
+ 对 md_min1_tick_bc 表进行分区处理以应对其不断增长的数据库，为此需要对索引进行相应的调整，旧表需要进行相应的更新以适应新的程序。表修改语句如下：
+1） 增加ts_date列，同时改变表主键及索引结构
+ ```mysql
+ALTER TABLE `md_min1_tick_bc` 
+ADD COLUMN `ts_date` DATE NOT NULL AFTER `symbol`,
+DROP PRIMARY KEY,
+ADD PRIMARY KEY (`market`, `symbol`, `ts_date`, `ts_curr`),
+DROP INDEX `id` ,
+ADD UNIQUE INDEX `id` (`id` ASC, `ts_date` ASC);
+```
+
+2） 进行表分区处理
+```mysql
+ALTER TABLE `bc_md`.`md_min1_tick_bc` 
+ PARTITION BY RANGE(TO_DAYS(ts_date)) ( 
+ PARTITION part1 VALUES LESS THAN (TO_DAYS('2018-08-01')), 
+ PARTITION part2 VALUES LESS THAN (TO_DAYS('2018-09-01')), 
+ PARTITION part3 VALUES LESS THAN (TO_DAYS('2018-10-01')), 
+ PARTITION part4 VALUES LESS THAN (TO_DAYS('2018-11-01')), 
+ PARTITION part5 VALUES LESS THAN (TO_DAYS('2018-12-01')), 
+ PARTITION part6 VALUES LESS THAN (TO_DAYS('2019-01-01')), 
+ PARTITION part7 VALUES LESS THAN (TO_DAYS('2019-02-01')), 
+ PARTITION part8 VALUES LESS THAN (TO_DAYS('2019-03-01')), 
+ PARTITION part9 VALUES LESS THAN (TO_DAYS('2019-04-01')), 
+ PARTITION part10 VALUES LESS THAN (TO_DAYS('2019-05-01')), 
+ PARTITION part11 VALUES LESS THAN (TO_DAYS('2019-06-01')), 
+ PARTITION part12 VALUES LESS THAN (TO_DAYS('2019-07-01')), 
+ PARTITION part13 VALUES LESS THAN (TO_DAYS('2019-08-01')), 
+ PARTITION part14 VALUES LESS THAN (TO_DAYS('2019-09-01')), 
+ PARTITION part15 VALUES LESS THAN (TO_DAYS('2019-10-01')), 
+ PARTITION part16 VALUES LESS THAN (TO_DAYS('2019-11-01')), 
+ PARTITION part17 VALUES LESS THAN (TO_DAYS('2019-12-01')), 
+ PARTITION part18 VALUES LESS THAN (MAXVALUE)
+ ) ; 
+```
